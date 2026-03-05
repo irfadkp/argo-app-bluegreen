@@ -1,0 +1,191 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  BACKEND_IMAGE_NAME: ${{ github.repository }}/backend
+  FRONTEND_IMAGE_NAME: ${{ github.repository }}/frontend
+
+jobs:
+  # Determine version based on commits
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      backend_changed: ${{ steps.changes.outputs.backend }}
+      frontend_changed: ${{ steps.changes.outputs.frontend }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for changes
+        uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+            frontend:
+              - 'frontend/**'
+
+      - name: Generate version
+        id: version
+        run: |
+          # Read version from backend package.json (use as primary version)
+          BACKEND_VERSION=$(jq -r '.version' backend/package.json)
+          FRONTEND_VERSION=$(jq -r '.version' frontend/package.json)
+          
+          # Use backend version as the primary version
+          VERSION="v${BACKEND_VERSION}"
+          
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "backend_version=v${BACKEND_VERSION}" >> $GITHUB_OUTPUT
+          echo "frontend_version=v${FRONTEND_VERSION}" >> $GITHUB_OUTPUT
+          echo "Generated version: ${VERSION}"
+          echo "Backend version: v${BACKEND_VERSION}"
+          echo "Frontend version: v${FRONTEND_VERSION}"
+
+  # Build and push backend
+  build-backend:
+    needs: version
+    if: needs.version.outputs.backend_changed == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ needs.version.outputs.version }}
+            type=raw,value=latest
+            type=sha,prefix={{branch}}-
+
+      - name: Build and push backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: ${{ github.event_name == 'push' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # Build and push frontend
+  build-frontend:
+    needs: version
+    if: needs.version.outputs.frontend_changed == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ needs.version.outputs.version }}
+            type=raw,value=latest
+            type=sha,prefix={{branch}}-
+
+      - name: Build and push frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: ${{ github.event_name == 'push' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # Create GitHub Release
+  create-release:
+    needs: [version, build-backend, build-frontend]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ needs.version.outputs.version }}
+          release_name: Release ${{ needs.version.outputs.version }}
+          body: |
+            ## Changes in this Release
+            - Backend: ${{ needs.version.outputs.backend_changed == 'true' && '✅ Updated' || '⏭️ No changes' }}
+            - Frontend: ${{ needs.version.outputs.frontend_changed == 'true' && '✅ Updated' || '⏭️ No changes' }}
+            
+            ### Docker Images
+            ${{ needs.version.outputs.backend_changed == 'true' && format('- Backend: `ghcr.io/{0}/backend:{1}`', github.repository, needs.version.outputs.version) || '' }}
+            ${{ needs.version.outputs.frontend_changed == 'true' && format('- Frontend: `ghcr.io/{0}/frontend:{1}`', github.repository, needs.version.outputs.version) || '' }}
+            
+            ### Manual Deployment
+            To deploy this version, update `gitops/overlays/dev/kustomization.yaml`:
+            ```yaml
+            images:
+              - name: ecommerce-backend
+                newName: ghcr.io/${{ github.repository }}/backend
+                newTag: ${{ needs.version.outputs.version }}
+              - name: ecommerce-frontend
+                newName: ghcr.io/${{ github.repository }}/frontend
+                newTag: ${{ needs.version.outputs.version }}
+            ```
+          draft: false
+          prerelease: false
+
+# Made with Bob
