@@ -1,5 +1,5 @@
 import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
-import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
+import { Navigate, Route, BrowserRouter as Router, Routes, useLocation } from 'react-router-dom';
 
 import { AuthProvider } from './context/AuthContext';
 import CartPage from './pages/CartPage';
@@ -12,6 +12,8 @@ import OrdersPage from './pages/OrdersPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import RegisterPage from './pages/RegisterPage';
+import logger from './utils/logger';
+import { useEffect } from 'react';
 
 const theme = createTheme({
   palette: {
@@ -24,13 +26,48 @@ const theme = createTheme({
   },
 });
 
+// Component to track route changes
+function RouteTracker() {
+  const location = useLocation();
+  
+  useEffect(() => {
+    logger.logNavigation(document.referrer, location.pathname);
+    logger.debug('Route changed', {
+      pathname: location.pathname,
+      search: location.search,
+      hash: location.hash
+    });
+  }, [location]);
+  
+  return null;
+}
+
 function App() {
+  useEffect(() => {
+    logger.info('Application initialized', {
+      environment: import.meta.env.MODE,
+      version: '1.0.0'
+    });
+    
+    // Log performance metrics
+    if (window.performance) {
+      const perfData = window.performance.timing;
+      const pageLoadTime = perfData.loadEventEnd - perfData.navigationStart;
+      logger.logPerformance('page_load', pageLoadTime);
+    }
+    
+    return () => {
+      logger.debug('Application unmounting');
+    };
+  }, []);
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AuthProvider>
         <CartProvider>
           <Router>
+            <RouteTracker />
             <Navbar />
             <Routes>
               <Route path="/" element={<HomePage />} />
