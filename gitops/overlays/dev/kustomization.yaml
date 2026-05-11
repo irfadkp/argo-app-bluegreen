@@ -10,9 +10,14 @@ resources:
   - ingress.yaml
   - namespace.yaml
 
-replicas:
-  - name: frontend
-    count: 1
+patches:
+  - target:
+      kind: Deployment
+      name: frontend
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
 
 images:
   - name: ecommerce-backend
@@ -21,9 +26,5 @@ images:
   - name: ecommerce-frontend
     newName: ghcr.io/irfadkp/lamborghini-shop/frontend
     newTag: "1.0.13"
-
-# Note: commonLabels removed to avoid conflicts with Argo Rollouts
-# Argo Rollouts validates that service selectors match rollout selectors
-# commonLabels would add environment: dev to rollout selector, causing mismatch
 
 # Made with Bob
