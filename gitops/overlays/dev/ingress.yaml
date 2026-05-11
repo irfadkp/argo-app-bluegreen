@@ -1,31 +1,30 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ecommerce-ingress
+  name: lamborghini-shop-ingress
   annotations:
     # Remove rewrite-target to preserve the /api prefix
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
 spec:
   ingressClassName: nginx
   rules:
-  - host: ecommerce-dev.local
+  - host: lamborghini-shop.local
     http:
       paths:
       - path: /api
         pathType: Prefix
         backend:
           service:
-            # Use backend-stable for Argo Rollouts traffic management
-            # Argo Rollouts will automatically manage traffic splitting between
-            # backend-stable and backend-canary services
-            name: backend-stable
+            # Use backend-lamborghini-active for Blue/Green deployment
+            # Blue/Green will switch traffic between active and preview
+            name: backend-lamborghini-active
             port:
               number: 3000
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: frontend
+            name: frontend-lamborghini
             port:
               number: 80
 

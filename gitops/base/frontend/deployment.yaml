@@ -1,20 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: frontend
+  name: frontend-lamborghini
   labels:
-    app: frontend
+    app: frontend-lamborghini
     component: ui
+    shop: lamborghini
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: frontend
+      app: frontend-lamborghini
   template:
     metadata:
       labels:
-        app: frontend
+        app: frontend-lamborghini
         component: ui
+        shop: lamborghini
     spec:
       containers:
       - name: frontend

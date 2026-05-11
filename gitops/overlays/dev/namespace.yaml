@@ -1,9 +1,10 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: ecommerce-dev
+  name: lamborghini-shop-dev
   labels:
-    name: ecommerce-dev
+    name: lamborghini-shop-dev
     environment: dev
+    app: lamborghini-shop
 
 # Made with Bob

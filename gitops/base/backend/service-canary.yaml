@@ -2,9 +2,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: backend-preview
+  name: backend-lamborghini-preview
   labels:
-    app: backend
+    app: backend-lamborghini
+    shop: lamborghini
 spec:
   type: ClusterIP
   ports:
@@ -13,16 +14,17 @@ spec:
     protocol: TCP
     name: http
   selector:
-    app: backend
+    app: backend-lamborghini
 
 ---
 # Active Service (Blue) - Routes production traffic to current version
 apiVersion: v1
 kind: Service
 metadata:
-  name: backend-active
+  name: backend-lamborghini-active
   labels:
-    app: backend
+    app: backend-lamborghini
+    shop: lamborghini
 spec:
   type: ClusterIP
   ports:
@@ -31,6 +33,6 @@ spec:
     protocol: TCP
     name: http
   selector:
-    app: backend
+    app: backend-lamborghini
 
 # Made with Bob

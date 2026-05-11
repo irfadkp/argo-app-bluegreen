@@ -1,19 +1,19 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: ecommerce-bluegreen
-  namespace: argocd-namespace
+  name: lamborghini-shop-dev
+  namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
   source:
-    repoURL: https://github.com/irfadkp/argo-app-bluegreen.git
+    repoURL: https://github.com/irfadkp/lamborghini-shop.git
     targetRevision: master
     path: gitops/overlays/dev
   destination:
     server: https://kubernetes.default.svc
-    namespace: ecommerce-bluegreen
+    namespace: lamborghini-shop-dev
   syncPolicy:
     automated:
       prune: true

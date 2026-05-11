@@ -1,7 +1,7 @@
 {
-  "name": "ecommerce-backend",
+  "name": "lamborghini-shop-backend",
   "version": "1.0.13",
-  "description": "E-commerce backend API with Express and PostgreSQL",
+  "description": "Lamborghini Shop backend API with Express and PostgreSQL",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",

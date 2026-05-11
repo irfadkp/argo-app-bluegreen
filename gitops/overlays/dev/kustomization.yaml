@@ -1,7 +1,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namespace: ecommerce-bluegreen
+namespace: lamborghini-shop-dev
 
 bases:
   - ../../base/database
@@ -18,11 +18,11 @@ patchesStrategicMerge:
 
 images:
   - name: ecommerce-backend
-    newName: ghcr.io/irfadkp/argo-app-bluegreen/backend
-    newTag: 1.0.13
+    newName: ghcr.io/irfadkp/lamborghini-shop/backend
+    newTag: "1.0.13"
   - name: ecommerce-frontend
-    newName: ghcr.io/irfadkp/argo-app-bluegreen/frontend
-    newTag: 1.0.13
+    newName: ghcr.io/irfadkp/lamborghini-shop/frontend
+    newTag: "1.0.13"
 
 # Note: commonLabels removed to avoid conflicts with Argo Rollouts
 # Argo Rollouts validates that service selectors match rollout selectors
