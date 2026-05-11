@@ -21,10 +21,10 @@ patches:
 
 images:
   - name: ecommerce-backend
-    newName: ghcr.io/irfadkp/lamborghini-shop/backend
+    newName: ghcr.io/irfadkp/argo-app-bluegreen/backend
     newTag: "1.0.13"
   - name: ecommerce-frontend
-    newName: ghcr.io/irfadkp/lamborghini-shop/frontend
+    newName: ghcr.io/irfadkp/argo-app-bluegreen/frontend
     newTag: "1.0.13"
 
 # Made with Bob
