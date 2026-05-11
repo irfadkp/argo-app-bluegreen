@@ -22,9 +22,9 @@ patches:
 images:
   - name: ecommerce-backend
     newName: ghcr.io/irfadkp/lamborghini-shop/backend
-    newTag: "1.0.14"
+    newTag: "1.0.13"
   - name: ecommerce-frontend
     newName: ghcr.io/irfadkp/lamborghini-shop/frontend
-    newTag: "1.0.14"
+    newTag: "1.0.13"
 
 # Made with Bob
